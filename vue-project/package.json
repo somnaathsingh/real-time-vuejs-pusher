@@ -7,6 +7,7 @@
     "preview": "vite preview --port 5050"
   },
   "dependencies": {
+    "pusher-js": "^7.1.0-beta",
     "vue": "^3.2.33"
   },
   "devDependencies": {

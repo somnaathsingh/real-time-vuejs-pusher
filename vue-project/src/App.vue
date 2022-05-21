@@ -1,81 +1,75 @@
-<script setup>
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
-</script>
-
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
+  <div class="container">
+    <div class="d-flex flex-column align-items-stretch flex-shrink-0 bg-white">
+      <div class="d-flex align-items-center flex-shrink-0 p-3 link-dark text-decoration-none border-bottom">
+        <input class="fs-5 fw-semibold" v-model="username"/>
+      </div>
+      <div class="list-group list-group-flush border-bottom scrollarea">
+        <div class="list-group-item list-group-item-action py-3 lh-tight"
+             v-for="message in messages" :key="message"
+        >
+          <div class="d-flex w-100 align-items-center justify-content-between">
+            <strong class="mb-1">{{ message.username }}</strong>
+          </div>
+          <div class="col-10 mb-1 small">{{ message.amount }}</div>
+          <div class="col-10 mb-1 small">{{ message.date }}</div>
+        </div>
+        
+      </div>
     </div>
-  </header>
-
-  <main>
-    <TheWelcome />
-  </main>
+    <form @submit.prevent="submit">
+      <input class="form-control" placeholder="Write a message" v-model="amount"/>
+      <input class="form-control" placeholder="Write a message" v-model="date"/>
+    </form>
+  </div>
 </template>
 
+<script>
+import {ref, onMounted} from 'vue';
+import Pusher from 'pusher-js';
+export default {
+  name: 'App',
+  setup() {
+    const username = ref('username');
+    const messages = ref([]);
+    const amount = ref('');
+    const date = ref('');
+    onMounted(() => {
+      Pusher.logToConsole = true;
+      const pusher = new Pusher('0b49cd23a502dbecc378', {
+        cluster: 'ap2'
+      });
+      const channel = pusher.subscribe('chat');
+      channel.bind('message', data => {
+        messages.value.push(data);
+      });
+    })
+    const submit = async () => {
+      await fetch('http://localhost:8000/api/messages', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          username: username.value,
+          amount: amount.value,
+          date: date.value,
+        })
+      })
+      amount.value = '';
+      date.value = '';
+    }
+    return {
+      username,
+      messages,
+      message,
+      date,
+      submit
+    }
+  }
+}
+</script>
+
 <style>
-@import './assets/base.css';
-
-#app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-
-  font-weight: normal;
-}
-
-header {
-  line-height: 1.5;
-}
-
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
-a,
-.green {
-  text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
-  transition: 0.4s;
-}
-
-@media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
-  }
-}
-
-@media (min-width: 1024px) {
-  body {
-    display: flex;
-    place-items: center;
-  }
-
-  #app {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
-  }
-
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
+.scrollarea {
+  min-height: 500px;
 }
 </style>
